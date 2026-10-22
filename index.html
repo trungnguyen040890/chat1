@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Realtime Chat với Firebase</title>
+    <title>Realtime Chat Thử Nghiệm</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -40,7 +40,6 @@
         max-width: 75%;
         word-wrap: break-word;
         font-size: 14px;
-        position: relative;
       }
       .message .sender-name {
         font-size: 10px;
@@ -82,9 +81,13 @@
         font-weight: bold;
       }
     </style>
+
+    <!-- Chuyển sang nhúng thư viện dạng Script truyền thống để tránh lỗi kén trình duyệt -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
   </head>
   <body>
-    <h3 id="welcomeText">Đang thiết lập thông tin người dùng...</h3>
+    <h3 id="welcomeText">Đang kết nối phòng chat...</h3>
 
     <section class="chat-section">
       <div class="chat-box" id="chatBox"></div>
@@ -99,22 +102,12 @@
       </div>
     </section>
 
-    <!-- Tích hợp các module SDK Firebase thông qua CDN chính thức -->
-    <script type="module">
-      import { initializeApp } from "https://gstatic.com";
-      import {
-        getDatabase,
-        ref,
-        push,
-        onChildAdded,
-      } from "https://gstatic.com";
-
-      // ĐÃ ĐIỀN ĐOẠN MÃ CẤU HÌNH CỦA BẠN VÀO ĐÂY
+    <script>
+      // Cấu hình thông số Firebase của riêng bạn
       const firebaseConfig = {
         apiKey: "AIzaSyCGlxNbqYn512DfUYP_ob3MJURmAnxJ_ak",
-        authDomain: "mychatapp-df9b7.firebaseapp.com",
-        databaseURL:
-          "https://mychatapp-df9b7-default-rtdb.asia-southeast1.firebasedatabase.app",
+        authDomain: "://firebaseapp.com",
+        databaseURL: "https://firebasedatabase.app",
         projectId: "mychatapp-df9b7",
         storageBucket: "mychatapp-df9b7.firebasestorage.app",
         messagingSenderId: "1005894182431",
@@ -122,12 +115,12 @@
         measurementId: "G-L65BK8J5ZY",
       };
 
-      // Khởi tạo Firebase
-      const app = initializeApp(firebaseConfig);
-      const database = getDatabase(app);
-      const messagesRef = ref(database, "chats"); // Tạo thư mục lưu tin nhắn tên là 'chats'
+      // Khởi tạo ứng dụng theo cú pháp tương thích cao (compat)
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+      const messagesRef = database.ref("chats");
 
-      // Hỏi tên người dùng khi vừa truy cập
+      // Hỏi biệt danh người dùng
       let username = prompt(
         "Nhập biệt danh của bạn để tham gia chat:",
         "User_" + Math.floor(Math.random() * 1000),
@@ -140,16 +133,26 @@
       const button = document.getElementById("sendBtn");
       const chatBox = document.getElementById("chatBox");
 
-      // Hàm gửi dữ liệu lên Firebase Server
+      // Hàm gửi tin nhắn lên đám mây
       function sendMessage() {
         const text = input.value.trim();
         if (text !== "") {
-          push(messagesRef, {
-            sender: username,
-            message: text,
-            timestamp: Date.now(),
-          });
-          input.value = "";
+          messagesRef
+            .push({
+              sender: username,
+              message: text,
+              timestamp: firebase.database.ServerValue.TIMESTAMP,
+            })
+            .then(() => {
+              input.value = ""; // Xóa chữ trong ô nhập khi gửi thành công
+            })
+            .catch((error) => {
+              alert(
+                "Lỗi gửi tin nhắn: " +
+                  error.message +
+                  "\n=> Hãy kiểm tra lại bước 1 (Sửa Rules) nhé!",
+              );
+            });
         }
       }
 
@@ -158,8 +161,8 @@
         if (e.key === "Enter") sendMessage();
       });
 
-      // Lắng nghe tin nhắn mới để hiển thị thời gian thực
-      onChildAdded(messagesRef, (snapshot) => {
+      // Cảm biến tự động tải và hiển thị tin nhắn thời gian thực về máy
+      messagesRef.on("child_added", (snapshot) => {
         const data = snapshot.val();
 
         const msgDiv = document.createElement("div");
