@@ -1,183 +1,164 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Realtime Chat On GitHub Pages</title>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Realtime Chat On GitHub Pages</title>
+  
+  <!-- Lệnh cưỡng chế trình duyệt xóa Cache máy chủ -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
 
-    <!-- Chống lưu bộ đệm trình duyệt ngay từ tiêu đề -->
-    <meta
-      http-equiv="Cache-Control"
-      content="no-cache, no-store, must-revalidate"
-    />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f2f5;
+    }
+    .chat-section {
+      width: 380px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .chat-box {
+      height: 380px;
+      padding: 15px;
+      overflow-y: auto;
+      background: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+    }
+    .message {
+      margin-bottom: 10px;
+      padding: 10px 14px;
+      border-radius: 18px;
+      max-width: 75%;
+      word-wrap: break-word;
+      font-size: 14px;
+    }
+    .message .sender-name {
+      font-size: 10px;
+      color: #777;
+      margin-bottom: 3px;
+      display: block;
+    }
+    .received {
+      background: #e4e6eb;
+      color: black;
+      align-self: flex-start;
+    }
+    .sent {
+      background: #0084ff;
+      color: white;
+      align-self: flex-end;
+    }
+    .chat-input-area {
+      display: flex;
+      border-top: 1px solid #eee;
+      padding: 10px;
+      background: white;
+    }
+    .chat-input-area input {
+      flex: 1;
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      outline: none;
+    }
+    .chat-input-area button {
+      padding: 0 15px;
+      margin-left: 8px;
+      background: #0084ff;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
 
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-        background-color: #f0f2f5;
-      }
-      .chat-section {
-        width: 380px;
-        border: 1px solid #ccc;
-        border-radius: 12px;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        background: white;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      }
-      .chat-box {
-        height: 380px;
-        padding: 15px;
-        overflow-y: auto;
-        background: #f9f9f9;
-        display: flex;
-        flex-direction: column;
-      }
-      .message {
-        margin-bottom: 10px;
-        padding: 10px 14px;
-        border-radius: 18px;
-        max-width: 75%;
-        word-wrap: break-word;
-        font-size: 14px;
-      }
-      .message .sender-name {
-        font-size: 10px;
-        color: #777;
-        margin-bottom: 3px;
-        display: block;
-      }
-      .received {
-        background: #e4e6eb;
-        color: black;
-        align-self: flex-start;
-      }
-      .sent {
-        background: #0084ff;
-        color: white;
-        align-self: flex-end;
-      }
-      .chat-input-area {
-        display: flex;
-        border-top: 1px solid #eee;
-        padding: 10px;
-        background: white;
-      }
-      .chat-input-area input {
-        flex: 1;
-        padding: 10px 15px;
-        border: 1px solid #ddd;
-        border-radius: 20px;
-        outline: none;
-      }
-      .chat-input-area button {
-        padding: 0 15px;
-        margin-left: 8px;
-        background: #0084ff;
-        color: white;
-        border: none;
-        border-radius: 20px;
-        cursor: pointer;
-        font-weight: bold;
-      }
-    </style>
+  <!-- ĐỔI SANG DÙNG CDNJS - CHỐNG BỊ CHẶN CORS TRÊN GITHUB PAGES 100% -->
+  <script src="https://cloudflare.com"></script>
+  <script src="https://cloudflare.com"></script>
+</head>
+<body>
 
-    <!-- DÙNG LINK PHIÊN BẢN COMPAT TRUYỀN THỐNG KHÔNG BAO GIỜ BỊ LỖI CORS SCRIPT -->
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
-  </head>
-  <body>
-    <h3 id="welcomeText">Đang thiết lập phòng chat...</h3>
+  <h3 id="welcomeText">Đang thiết lập phòng chat đám mây...</h3>
 
-    <section class="chat-section">
-      <div class="chat-box" id="chatBox"></div>
-      <div class="chat-input-area">
-        <input
-          type="text"
-          id="userInput"
-          placeholder="Nhập tin nhắn..."
-          autocomplete="off"
-        />
-        <button id="sendBtn">Gửi</button>
-      </div>
-    </section>
+  <section class="chat-section">
+    <div class="chat-box" id="chatBox"></div>
+    <div class="chat-input-area">
+      <input type="text" id="userInput" placeholder="Nhập tin nhắn..." autocomplete="off" />
+      <button id="sendBtn">Gửi</button>
+    </div>
+  </section>
 
-    <script>
-      // Cấu hình kết nối đám mây Firebase của bạn
-      const firebaseConfig = {
-        apiKey: "AIzaSyCGlxNbqYn512DfUYP_ob3MJURmAnxJ_ak",
-        authDomain: "mychatapp-df9b7.firebaseapp.com",
-        databaseURL: "https://firebasedatabase.app",
-        projectId: "mychatapp-df9b7",
-        storageBucket: "mychatapp-df9b7.firebasestorage.app",
-        messagingSenderId: "1005894182431",
-        appId: "1:1005894182431:web:8ce31a50e71bfb6336972a",
-        measurementId: "G-L65BK8J5ZY",
-      };
+  <script>
+    // Cấu hình Firebase Realtime Database bảo mật của riêng bạn
+    const firebaseConfig = {
+      apiKey: "AIzaSyCGlxNbqYn512DfUYP_ob3MJURmAnxJ_ak",
+      authDomain: "mychatapp-df9b7.firebaseapp.com",
+      databaseURL: "https://firebasedatabase.app",
+      projectId: "mychatapp-df9b7",
+      storageBucket: "mychatapp-df9b7.firebasestorage.app",
+      messagingSenderId: "1005894182431",
+      appId: "1:1005894182431:web:8ce31a50e71bfb6336972a",
+      measurementId: "G-L65BK8J5ZY"
+    };
 
-      // Khởi tạo hệ thống
+    // Khởi tạo an toàn sau khi thư viện tải xong
+    try {
       firebase.initializeApp(firebaseConfig);
       const database = firebase.database();
-      const messagesRef = database.ref("chats");
+      const messagesRef = database.ref('chats');
 
-      // Nhập tên người dùng nhanh
-      let username = prompt(
-        "Nhập biệt danh của bạn để tham gia chat:",
-        "User_" + Math.floor(Math.random() * 1000),
-      );
-      if (!username || username.trim() === "") username = "Ẩn danh";
-      document.getElementById("welcomeText").textContent =
-        `Chào mừng, ${username}!`;
+      // Nhập biệt danh người dùng nhanh
+      let username = prompt("Nhập biệt danh của bạn để tham gia chat:", "User_" + Math.floor(Math.random() * 1000));
+      if(!username || username.trim() === "") username = "Ẩn danh";
+      document.getElementById('welcomeText').textContent = `Chào mừng, ${username}!`;
 
-      const input = document.getElementById("userInput");
-      const button = document.getElementById("sendBtn");
-      const chatBox = document.getElementById("chatBox");
+      const input = document.getElementById('userInput');
+      const button = document.getElementById('sendBtn');
+      const chatBox = document.getElementById('chatBox');
 
       function sendMessage() {
         const text = input.value.trim();
-        if (text !== "") {
-          messagesRef
-            .push({
-              sender: username,
-              message: text,
-              timestamp: firebase.database.ServerValue.TIMESTAMP,
-            })
-            .then(() => {
-              input.value = "";
-            })
-            .catch((error) => {
-              alert(
-                "Lỗi lưu dữ liệu: " +
-                  error.message +
-                  "\nHãy kiểm tra tab RULES trong Realtime Database!",
-              );
-            });
+        if (text !== '') {
+          messagesRef.push({
+            sender: username,
+            message: text,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+          }).then(() => {
+            input.value = ''; 
+          }).catch((error) => {
+            alert("Lỗi phân quyền Firebase: " + error.message + "\nHãy đổi RULES thành true trong Firebase Console!");
+          });
         }
       }
 
-      button.addEventListener("click", sendMessage);
-      input.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") sendMessage();
-      });
+      button.addEventListener('click', sendMessage);
+      input.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
-      // Lắng nghe và hiển thị tin nhắn đồng bộ tức thời
-      messagesRef.on("child_added", (snapshot) => {
+      // Lắng nghe và cập nhật tin nhắn đồng bộ tức thời từ database đám mây
+      messagesRef.on('child_added', (snapshot) => {
         const data = snapshot.val();
+        
+        const msgDiv = document.createElement('div');
+        msgDiv.classList.add('message');
 
-        const msgDiv = document.createElement("div");
-        msgDiv.classList.add("message");
-
-        const senderSpan = document.createElement("span");
-        senderSpan.classList.add("sender-name");
+        const senderSpan = document.createElement('span');
+        senderSpan.classList.add('sender-name');
         senderSpan.textContent = data.sender;
         msgDiv.appendChild(senderSpan);
 
@@ -185,14 +166,20 @@
         msgDiv.appendChild(textNode);
 
         if (data.sender === username) {
-          msgDiv.classList.add("sent");
+          msgDiv.classList.add('sent');
         } else {
-          msgDiv.classList.add("received");
+          msgDiv.classList.add('received');
         }
 
         chatBox.appendChild(msgDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
+        chatBox.scrollTop = chatBox.scrollHeight; 
       });
-    </script>
-  </body>
+
+    } catch (e) {
+      document.getElementById('welcomeText').textContent = "Lỗi kết nối thư viện hệ thống!";
+      console.error("Firebase load error: ", e);
+    }
+  </script>
+
+</body>
 </html>
