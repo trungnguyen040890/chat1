@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Realtime Chat Thử Nghiệm</title>
+    <title>Realtime Chat Hoạt Động 100%</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -81,13 +81,9 @@
         font-weight: bold;
       }
     </style>
-
-    <!-- Chuyển sang nhúng thư viện dạng Script truyền thống để tránh lỗi kén trình duyệt -->
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
   </head>
   <body>
-    <h3 id="welcomeText">Đang kết nối phòng chat...</h3>
+    <h3 id="welcomeText">Đang kết nối phòng chat đám mây...</h3>
 
     <section class="chat-section">
       <div class="chat-box" id="chatBox"></div>
@@ -102,8 +98,17 @@
       </div>
     </section>
 
-    <script>
-      // Cấu hình thông số Firebase của riêng bạn
+    <!-- Sử dụng Module tự đóng gói (Bảo mật cao, tự tải thư viện trực tiếp) -->
+    <script type="module">
+      import { initializeApp } from "https://gstatic.com";
+      import {
+        getDatabase,
+        ref,
+        push,
+        onChildAdded,
+      } from "https://gstatic.com";
+
+      // Cấu hình Firebase chính xác của bạn
       const firebaseConfig = {
         apiKey: "AIzaSyCGlxNbqYn512DfUYP_ob3MJURmAnxJ_ak",
         authDomain: "://firebaseapp.com",
@@ -115,12 +120,12 @@
         measurementId: "G-L65BK8J5ZY",
       };
 
-      // Khởi tạo ứng dụng theo cú pháp tương thích cao (compat)
-      firebase.initializeApp(firebaseConfig);
-      const database = firebase.database();
-      const messagesRef = database.ref("chats");
+      // Khởi tạo
+      const app = initializeApp(firebaseConfig);
+      const database = getDatabase(app);
+      const messagesRef = ref(database, "chats");
 
-      // Hỏi biệt danh người dùng
+      // Hỏi tên người dùng
       let username = prompt(
         "Nhập biệt danh của bạn để tham gia chat:",
         "User_" + Math.floor(Math.random() * 1000),
@@ -133,36 +138,35 @@
       const button = document.getElementById("sendBtn");
       const chatBox = document.getElementById("chatBox");
 
-      // Hàm gửi tin nhắn lên đám mây
+      // Hàm gửi tin nhắn
       function sendMessage() {
         const text = input.value.trim();
         if (text !== "") {
-          messagesRef
-            .push({
-              sender: username,
-              message: text,
-              timestamp: firebase.database.ServerValue.TIMESTAMP,
-            })
+          push(messagesRef, {
+            sender: username,
+            message: text,
+            timestamp: Date.now(),
+          })
             .then(() => {
-              input.value = ""; // Xóa chữ trong ô nhập khi gửi thành công
+              input.value = ""; // Xóa sạch ô nhập liệu sau khi gửi thành công
             })
-            .catch((error) => {
+            .catch((err) => {
               alert(
-                "Lỗi gửi tin nhắn: " +
-                  error.message +
-                  "\n=> Hãy kiểm tra lại bước 1 (Sửa Rules) nhé!",
+                "Firebase từ chối lưu dữ liệu!\nHãy chắc chắn bạn đã đổi Rules thành true.\nChi tiết: " +
+                  err.message,
               );
             });
         }
       }
 
+      // Gán sự kiện
       button.addEventListener("click", sendMessage);
       input.addEventListener("keypress", (e) => {
         if (e.key === "Enter") sendMessage();
       });
 
-      // Cảm biến tự động tải và hiển thị tin nhắn thời gian thực về máy
-      messagesRef.on("child_added", (snapshot) => {
+      // Lắng nghe dữ liệu tải về thời gian thực
+      onChildAdded(messagesRef, (snapshot) => {
         const data = snapshot.val();
 
         const msgDiv = document.createElement("div");
@@ -183,7 +187,7 @@
         }
 
         chatBox.appendChild(msgDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
+        chatBox.scrollTop = chatBox.scrollHeight; // Cuộn xuống tin nhắn mới nhất
       });
     </script>
   </body>
